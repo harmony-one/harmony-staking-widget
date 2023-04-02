@@ -1,4 +1,4 @@
-# staking-widget-react
+# Harmony Staking Widget
 
 > Harmony Staking Widget
 
