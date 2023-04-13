@@ -5,7 +5,7 @@ import { Box } from 'grommet';
 
 export const Widget = ({ validator }: { validator: string }) => {
     return (
-        <Box direction="column" width="650px" style={{ maxWidth: "100%" }}>
+        <Box direction="column" style={{ maxWidth: "100%" }} gap="20px">
             <ValidatorInfo validatorAddress={validator} />
             <StakingBlock validatorAddress={validator} />
         </Box>
