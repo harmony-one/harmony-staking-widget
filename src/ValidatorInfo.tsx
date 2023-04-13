@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { StakingAPI, IValidatorFull, NETWORK_TYPE } from "harmony-staking-sdk";
-import { calculateUniqueDelegators, convertToONE } from "./utils";
+import { calculateUniqueDelegators, convertToONE, percent } from "./utils";
 import { Box, Text } from 'grommet';
-import { Link, ValueItem } from "./components";
+import { Link, ValueItem, Website } from "./components";
 
 const stakingApi = new StakingAPI({
     apiUrl: "https://api.stake.hmny.io",
@@ -25,12 +25,25 @@ const ValidatorInfo = ({ validatorAddress }: { validatorAddress: string }) => {
     }, [validatorAddress]);
 
     if (!validatorInfo) {
-        return <div>Loading...</div>;
+        return <Box
+            align="center"
+            justify="center"
+            style={{
+                border: "1px solid rgb(207, 217, 222)",
+                borderRadius: "12px"
+            }}
+            pad="medium"
+            gap="30px"
+            margin="medium"
+        >
+            Loading...
+        </Box>
     }
 
     return (
-        <Box pad="medium">
-            <Box direction="row" gap="30px" align="center">
+        <Box gap="15px">
+            <Text weight="bold">{validatorInfo.name}</Text>
+            <Box direction="row" gap="30px" align="center" justify="between" fill={true}>
                 <Box>
                     <img
                         src={stakingApi.getValidatorAvatarUrl(
@@ -38,12 +51,16 @@ const ValidatorInfo = ({ validatorAddress }: { validatorAddress: string }) => {
                             validatorInfo.address
                         )}
                         alt="validator avatar"
-                        style={{ maxWidth: "100%", width: "140px" }}
+                        style={{ 
+                            maxWidth: "100%", 
+                            // width: "200px" 
+                            maxHeight: '140px',
+                            height: '100%'
+                        }}
                     />
                 </Box>
 
                 <Box direction="column" align="start" gap="5px">
-                    <Text weight="bold">{validatorInfo.name}</Text>
                     {/* <Text>Desciption: {validatorInfo.details}</Text> */}
 
                     {/* <Text>Address: {validatorInfo.address}</Text> */}
@@ -52,22 +69,14 @@ const ValidatorInfo = ({ validatorAddress }: { validatorAddress: string }) => {
                         <ValueItem>{convertToONE(validatorInfo.total_stake)} ONE</ValueItem>
                     </Text>
                     <Text>
-                        Self Stake:{' '}
-                        <ValueItem>{convertToONE(validatorInfo.self_stake)} ONE</ValueItem>
+                        Expected return:{' '}
+                        <ValueItem>{percent(validatorInfo.apr)}</ValueItem>
                     </Text>
                     <Text>
                         Total Delegators:{' '}
                         <ValueItem>{calculateUniqueDelegators(validatorInfo.delegations)}</ValueItem>
                     </Text>
-                    <Text>
-                        Website:{' '}
-                        <Link
-                            href={validatorInfo.website}
-                            target="_blank"
-                        >
-                            {validatorInfo.website}
-                        </Link>
-                    </Text>
+                    <Website website={validatorInfo.website} />
                 </Box>
             </Box>
         </Box>

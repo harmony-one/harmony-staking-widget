@@ -1,23 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { Box, Button, TextInput, Text } from 'grommet';
+import React, { useState, useEffect, useCallback } from "react";
+import { Box } from 'grommet';
 import Web3 from "web3";
-import { StakingContract } from "harmony-staking-sdk";
-import { convertToONE } from "./utils";
-import { Link } from "./components";
+import { StakingContract, StakingAPI, NETWORK_TYPE } from "harmony-staking-sdk";
+import { DelegationBlock } from "./components/DelegationBlock";
+import { MenuBar } from "./components";
+import { UnDelegationBlock } from "./components/UnDelegationBlock";
 
-const MIN_AMOUNT = 100;
+export enum ACTION_TYPE {
+    DELEGATION = 'DELEGATION',
+    UNDELEGATION = 'UNDELEGATION',
+}
+
+const stakingApi = new StakingAPI({
+    apiUrl: "https://api.stake.hmny.io",
+});
 
 const StakingBlock = ({ validatorAddress }: { validatorAddress: string }) => {
     const [web3, setWeb3] = useState<Web3 | null>(null);
     const [account, setAccount] = useState<string | null>(null);
     const [stakingContract, setStakingContract] = useState<StakingContract | null>(null);
-    const [delegationAmount, setDelegationAmount] = useState<string>(String(MIN_AMOUNT));
-    const [loading, setLoading] = useState<boolean>(false);
-    const [error, setError] = useState<string>('');
-    const [txHash, setTxHash] = useState<string>('');
-    const [success, setSuccess] = useState<boolean>(false);
     const [balance, setBalance] = useState('');
-    const [isTouched, setIsTouched] = useState(false);
+    const [action, setAction] = useState(ACTION_TYPE.DELEGATION)
+    const [delegated, setDelegated] = useState<string>('');
 
     const loadBalance = async () => {
         if (web3 && account) {
@@ -29,27 +33,38 @@ const StakingBlock = ({ validatorAddress }: { validatorAddress: string }) => {
         return '';
     }
 
+    const getDelegations = async () => {
+        if (account) {
+            const delegations = await stakingApi.fetchDelegationsByAddress(
+                NETWORK_TYPE.MAINNET,
+                account
+            );
+
+            delegations.forEach(d => {
+                if (d.validatorAddress === validatorAddress) {
+                    setDelegated(String(d.delegationAmount));
+                }
+            })
+        }
+    }
+
+    useEffect(() => {
+        getDelegations();
+    }, [validatorAddress, account]);
+
     useEffect(() => {
         loadBalance();
     }, [web3, account])
 
-    useEffect(() => {
-        if (+delegationAmount < MIN_AMOUNT) {
-            setError(`Amount must be more than ${MIN_AMOUNT}`);
-            return;
+    const accountsChanged = (accounts: string[]) => {
+        if (accounts.length) {
+            setAccount(accounts[0]);
+            localStorage.setItem('staking-widtget', JSON.stringify({ metamaskAuthorised: true }));
+        } else {
+            setAccount('');
+            localStorage.setItem('staking-widtget', JSON.stringify({ metamaskAuthorised: false }));
         }
-
-        if (account && web3 && balance !== '') {
-            const balanceONE = convertToONE(+balance);
-
-            if (+delegationAmount > +balanceONE) {
-                setError(`Amount must be less than ${convertToONE(+balance)} ONE`);
-                return;
-            }
-        }
-
-        setError('');
-    }, [delegationAmount, account, web3, balance])
+    }
 
     useEffect(() => {
         const initializeWeb3 = async () => {
@@ -71,7 +86,11 @@ const StakingBlock = ({ validatorAddress }: { validatorAddress: string }) => {
             } else {
                 console.error("No Web3 provider detected");
             }
+
+            //@ts-ignore
+            window.ethereum.on('accountsChanged', accountsChanged);
         };
+
         initializeWeb3();
     }, []);
 
@@ -84,142 +103,83 @@ const StakingBlock = ({ validatorAddress }: { validatorAddress: string }) => {
                 setStakingContract(stakingContract);
             };
             initializeStakingContract();
+
+            const localStorageString = localStorage.getItem('staking-widtget');
+            if (localStorageString) {
+                const { metamaskAuthorised } = JSON.parse(localStorageString);
+
+                if (metamaskAuthorised) {
+                    getAccount();
+                }
+            }
         }
     }, [web3]);
 
     const getAccount = async () => {
-        if (web3) {
-            const [account] = await web3.eth.getAccounts();
-            setAccount(account);
-        }
+        //@ts-ignore
+        window.ethereum.request({ method: 'eth_requestAccounts' }).then(accountsChanged)
     };
 
-    const handleDelegate = async () => {
-        if (!web3) {
-            setError('Web3 not initilized');
-            return;
-        }
-
-        if (!stakingContract) {
-            setError("Staking contract not initialized");
-            return;
-        }
-
-        try {
-            if (!account) {
-                //@ts-ignore
-                await window.ethereum.enable();
-                await getAccount();
-            }
-
-            const balance = await loadBalance() as any;
-            const balanceONE = convertToONE(+balance);
-
-            if (+delegationAmount > +balanceONE) {
-                throw new Error(`Amount must be less than ${convertToONE(+balance)} ONE`);
-            }
-
-            if (+delegationAmount < MIN_AMOUNT) {
-                throw new Error(`Amount must be more than ${MIN_AMOUNT}`);
-            }
-
-            setLoading(true);
-            setSuccess(false);
-            setTxHash('');
-            setError('');
-
-            const tx = await stakingContract.delegate(
-                validatorAddress,
-                web3.utils.toWei(delegationAmount.toString(), 'ether'),
-                (txHash) => {
-                    // setLoading(false);
-                    setTxHash(txHash);
-                }
-            );
-
-            setSuccess(true);
-
-            console.log("Delegate transaction confirmed:", tx);
-        } catch (err) {
-            setError(err.message);
-            setLoading(false);
-        }
-    };
+    if (!account) {
+        return <Box
+            align="center"
+            justify="center"
+            style={{
+                border: "1px solid rgb(207, 217, 222)",
+                borderRadius: "12px"
+            }}
+            pad="small"
+            gap="10px"
+            onClick={getAccount}
+        >
+            Please connect your metamask wallet to delegate tokens
+            <img
+                src="https://1.country/images/metamaskFox.svg"
+                width="60px"
+                height="60px"
+            />
+        </Box>
+    }
 
     return (
         <Box
             direction="column"
-            pad="medium"
-            gap="10px"
+            gap="20px"
             align="end"
         >
-            <Box direction="row" justify="between" fill={true}>
-                <Text>
-                    Delegation amount (ONE)
-                </Text>
-                <Text>
-                    {web3 && account ? `Max ${convertToONE(+balance)} ONE` : ''}
-                </Text>
-            </Box>
-            <TextInput
-                type="number"
-                min={MIN_AMOUNT}
-                placeholder="Enter amount"
-                value={delegationAmount}
-                disabled={loading}
-                onChange={(e) => setDelegationAmount(e.target.value)}
-                onBlur={() => setIsTouched(true)}
+            <MenuBar
+                options={[
+                    { text: "Delegate", value: ACTION_TYPE.DELEGATION },
+                    { text: "Undelegate", value: ACTION_TYPE.UNDELEGATION },
+                ]}
+                value={action}
+                onClick={(value) => setAction(value)}
             />
-            <Button
-                onClick={handleDelegate}
-                disabled={loading}
-                style={{
-                    background: "#0a93eb",
-                    color: 'white',
-                    width: 150,
-                    padding: "12px 20px",
-                    borderRadius: 5,
-                    textAlign: 'center'
+
+            {action === ACTION_TYPE.DELEGATION && <DelegationBlock
+                validatorAddress={validatorAddress}
+                web3={web3}
+                balance={balance}
+                stakingContract={stakingContract}
+                account={account}
+                onSuccess={() => {
+                    loadBalance();
+                    getDelegations();
                 }}
-            >
-                <Text size="18px">
-                    {loading ? 'Delegating' : 'Delegate'}
-                </Text>
-            </Button>
-            {
-                txHash && <Box fill={true} align="start">
-                    Transaction Hash:{' '}
-                    <Link
-                        href={`https://explorer.harmony.one/tx/${txHash}`}
-                        target="_blank"
-                    >
-                        <Text>{txHash}</Text>
-                    </Link>
-                </Box>
+            />
             }
-            {
-                error && <Box fill={true} align="start">
-                    <Text
-                        color="red"
-                        style={{
-                            overflowWrap: "anywhere"
-                        }}
-                    >
-                        {error}
-                    </Text>
-                </Box>
-            }
-            {
-                success && <Box fill={true} align="start">
-                    <Text
-                        color="#14a266"
-                        style={{
-                            overflowWrap: "anywhere"
-                        }}
-                    >
-                        Your tokens have been successfully delegated
-                    </Text>
-                </Box>
+
+            {action === ACTION_TYPE.UNDELEGATION && <UnDelegationBlock
+                validatorAddress={validatorAddress}
+                web3={web3}
+                balance={delegated}
+                stakingContract={stakingContract}
+                account={account}
+                onSuccess={() => {
+                    loadBalance();
+                    getDelegations();
+                }}
+            />
             }
         </Box>
     );
