@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Button, TextInput, Text } from 'grommet';
+import { Box, Button, Text } from 'grommet';
 import Web3 from "web3";
 import { StakingContract } from "harmony-staking-sdk";
-import { Link } from ".";
+import { Input, Label, Link } from ".";
 import { convertToONE } from "../utils";
 
 const MIN_AMOUNT = 100;
@@ -19,7 +19,7 @@ interface IDelegationProps {
 export const DelegationBlock = (props: IDelegationProps) => {
     const { web3, stakingContract, balance, account, validatorAddress } = props;
 
-    const [delegationAmount, setDelegationAmount] = useState<string>(String(MIN_AMOUNT));
+    const [delegationAmount, setDelegationAmount] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
     const [txHash, setTxHash] = useState<string>('');
@@ -34,7 +34,7 @@ export const DelegationBlock = (props: IDelegationProps) => {
     // }, [balance]);
 
     useEffect(() => {
-        if (+delegationAmount < MIN_AMOUNT) {
+        if (isTouched && +delegationAmount < MIN_AMOUNT) {
             // setError(`Amount must be more than ${MIN_AMOUNT}`);
             setError(`Minimum amount for delegation ${MIN_AMOUNT} ONE`);
             return;
@@ -50,7 +50,7 @@ export const DelegationBlock = (props: IDelegationProps) => {
         }
 
         setError('');
-    }, [delegationAmount, account, web3, balance])
+    }, [delegationAmount, account, web3, balance, isTouched])
 
     const handleDelegate = async () => {
         if (!web3) {
@@ -102,35 +102,28 @@ export const DelegationBlock = (props: IDelegationProps) => {
     return (
         <Box
             direction="column"
-            gap="10px"
+            gap="20px"
             align="end"
             fill={true}
         >
-            <Box direction="row" justify="between" align="end" fill={true} gap="10px">
-                <Box
-                    direction="column"
-                    gap="10px"
-                    align="end"
-                    fill={true}
-                >
-                    <Box direction="row" justify="between" fill={true}>
-                        <Text>
-                            Amount
-                        </Text>
-                        <Text>
-                            {web3 && account ? `Max ${convertToONE(+balance - 2 * 1e18)} ONE` : ''}
-                        </Text>
-                    </Box>
-                    <TextInput
-                        type="number"
-                        min={MIN_AMOUNT}
-                        placeholder="Enter amount"
-                        value={delegationAmount}
-                        disabled={loading}
-                        onChange={(e) => setDelegationAmount(e.target.value)}
-                        onBlur={() => setIsTouched(true)}
-                    />
-                </Box>
+            <Box
+                direction="row"
+                justify="between"
+                align="end"
+                fill={true}
+                gap="10px"
+            >
+                <Input
+                    type="number"
+                    min={MIN_AMOUNT}
+                    placeholder="Amount"
+                    value={delegationAmount}
+                    disabled={loading}
+                    onChange={(e) => setDelegationAmount(e.target.value)}
+                    onBlur={() => setIsTouched(true)}
+                    max={convertToONE(+balance - 2 * 1e18)}
+                    // max="100000000"
+                />
                 <Button
                     onClick={handleDelegate}
                     disabled={loading}
@@ -138,7 +131,7 @@ export const DelegationBlock = (props: IDelegationProps) => {
                         background: "#0a93eb",
                         color: 'white',
                         width: 200,
-                        height: 43,
+                        height: 47,
                         borderRadius: 5,
                         textAlign: 'center'
                     }}
@@ -148,43 +141,42 @@ export const DelegationBlock = (props: IDelegationProps) => {
                     </Text>
                 </Button>
             </Box>
-            <Box gap="10px" margin={{ top: 'small' }} align="start" fill={true}>
-                {
-                    txHash && <Box fill={true} align="start">
-                        Transaction Hash:{' '}
-                        <Link
-                            href={`https://explorer.harmony.one/tx/${txHash}`}
-                            target="_blank"
-                        >
-                            <Text>{txHash}</Text>
-                        </Link>
-                    </Box>
-                }
-                {
-                    error && <Box fill={true} align="start">
-                        <Text
-                            color="red"
-                            style={{
-                                overflowWrap: "anywhere"
-                            }}
-                        >
-                            {error}
-                        </Text>
-                    </Box>
-                }
-                {
-                    success && <Box fill={true} align="start">
-                        <Text
-                            color="#14a266"
-                            style={{
-                                overflowWrap: "anywhere"
-                            }}
-                        >
-                            Your tokens have been successfully delegated
-                        </Text>
-                    </Box>
-                }
-            </Box>
+
+            {
+                txHash && <Box fill={true} align="start">
+                    Transaction Hash:{' '}
+                    <Link
+                        href={`https://explorer.harmony.one/tx/${txHash}`}
+                        target="_blank"
+                    >
+                        <Text>{txHash}</Text>
+                    </Link>
+                </Box>
+            }
+            {
+                error && <Box fill={true} align="start">
+                    <Text
+                        color="red"
+                        style={{
+                            overflowWrap: "anywhere"
+                        }}
+                    >
+                        {error}
+                    </Text>
+                </Box>
+            }
+            {
+                success && <Box fill={true} align="start">
+                    <Text
+                        color="#14a266"
+                        style={{
+                            overflowWrap: "anywhere"
+                        }}
+                    >
+                        Your tokens have been successfully delegated
+                    </Text>
+                </Box>
+            }
         </Box>
     );
 };
