@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Text } from 'grommet';
+import { Box, Button, Text, TextInput, TextInputProps } from 'grommet';
+import styled from "styled-components";
 
 export const ValueItem = ({ children }: any) => {
     return <Text weight="bold">
@@ -14,7 +15,8 @@ export const Link = (
         color: "#00ade8",
         overflow: 'hidden',
         whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis'
+        textOverflow: 'ellipsis',
+        maxWidth: "100%"
     }}>
         {props.children}
     </a>
@@ -116,3 +118,74 @@ export const Website = ({ website }: any) => {
         </Link>
     </Text>
 }
+
+export const getLinkToStaking = (address: string) => {
+    return `https://staking.harmony.one/validators/mainnet/${address}`
+}
+
+export const Label = (props: { value: string; onClick: () => void }) => {
+    return <Box
+        style={{
+            cursor: 'pointer'
+        }}
+        onClick={() => props.onClick()}
+    >
+        <Text color="#0c93eb" size="16px">
+            {props.value}
+        </Text>
+    </Box>
+}
+
+export const ExtendedInput: React.FC<TextInputProps & { max?: string }> = (props) => {
+    return <Box
+        direction="row"
+        fill={true}
+        align="center"
+        style={{
+            borderRadius: 5,
+            border: "1px solid rgba(0,0,0,0.33)",
+            height: "47px"
+        }}
+    >
+        <TextInput
+            plain
+            focusIndicator={false}
+            {...props}
+        />
+        <Button
+            style={{
+                textAlign: 'right',
+                padding: "0px 11px",
+                minWidth: "122px",
+                maxWidth: "122px",
+                display: "block",
+                boxSizing: "content-box"
+            }}>
+            <Text
+                color="#0c93eb"
+                size="16px"
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                    if (props.onChange && props.max) {
+                        props.onChange({ target: { value: props.max } } as any)
+                    }
+                }}
+            >
+                {`Max ${props.max} ONE`}
+            </Text>
+        </Button>
+    </Box>
+}
+
+export const Input = styled(ExtendedInput)`
+    ::-webkit-inner-spin-button{
+        -webkit-appearance: none; 
+        margin: 0; 
+    }
+    ::-webkit-outer-spin-button{
+        -webkit-appearance: none; 
+        margin: 0; 
+    } 
+
+    height: 45px;
+`;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { StakingAPI, IValidatorFull, NETWORK_TYPE } from "harmony-staking-sdk";
 import { calculateUniqueDelegators, convertToONE, percent } from "./utils";
 import { Box, Text } from 'grommet';
-import { Link, ValueItem, Website } from "./components";
+import { getLinkToStaking, Link, ValueItem, Website } from "./components";
 
 const stakingApi = new StakingAPI({
     apiUrl: "https://api.stake.hmny.io",
@@ -43,21 +43,32 @@ const ValidatorInfo = ({ validatorAddress }: { validatorAddress: string }) => {
     return (
         <Box gap="15px">
             <Text weight="bold">{validatorInfo.name}</Text>
-            <Box direction="row" gap="30px" align="center" justify="between" fill={true}>
+            <Box direction="row" gap="20px" align="center" justify="start" fill={true}>
                 <Box>
-                    <img
-                        src={stakingApi.getValidatorAvatarUrl(
-                            NETWORK_TYPE.MAINNET,
-                            validatorInfo.address
-                        )}
-                        alt="validator avatar"
-                        style={{ 
-                            maxWidth: "100%", 
+                    <a
+                        href={getLinkToStaking(validatorInfo.address)}
+                        target="_blank"
+                        style={{
+                            maxWidth: "100%",
                             // width: "200px" 
                             maxHeight: '140px',
                             height: '100%'
                         }}
-                    />
+                    >
+                        <img
+                            src={stakingApi.getValidatorAvatarUrl(
+                                NETWORK_TYPE.MAINNET,
+                                validatorInfo.address
+                            )}
+                            alt="validator avatar"
+                            style={{
+                                maxWidth: "100%",
+                                // width: "200px" 
+                                maxHeight: '140px',
+                                height: '100%'
+                            }}
+                        />
+                    </a>
                 </Box>
 
                 <Box direction="column" align="start" gap="5px">

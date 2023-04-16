@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Box, Button, TextInput, Text } from 'grommet';
+import { Box, Button, Text } from 'grommet';
 import Web3 from "web3";
 import { StakingContract } from "harmony-staking-sdk";
-import { Link } from ".";
+import { Link, Input } from ".";
 import { convertToONE } from "../utils";
 
 const MIN_AMOUNT = 0;
@@ -19,7 +19,7 @@ interface IDelegationProps {
 export const UnDelegationBlock = (props: IDelegationProps) => {
     const { web3, stakingContract, balance, account, validatorAddress } = props;
 
-    const [delegationAmount, setDelegationAmount] = useState<string>(String(MIN_AMOUNT));
+    const [delegationAmount, setDelegationAmount] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string>('');
     const [txHash, setTxHash] = useState<string>('');
@@ -28,8 +28,13 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
     const [isTouched, setIsTouched] = useState(false);
 
     useEffect(() => {
-        if (+delegationAmount < MIN_AMOUNT) {
+        if (isTouched && (+delegationAmount < MIN_AMOUNT)) {
             setError(`Amount must be more than ${MIN_AMOUNT}`);
+            return;
+        }
+
+        if (isTouched && (+delegationAmount <= 0)) {
+            setError(`Amount must be more than 0`);
             return;
         }
 
@@ -43,7 +48,7 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
         }
 
         setError('');
-    }, [delegationAmount, account, web3, balance])
+    }, [delegationAmount, account, web3, balance, isTouched])
 
     const handleDelegate = async () => {
         if (!web3) {
@@ -61,6 +66,10 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
 
             if (+delegationAmount > (+balanceONE)) {
                 throw new Error(`Amount must be less than ${convertToONE(+balance)} ONE`);
+            }
+
+            if (+delegationAmount <= 0) {
+                throw new Error(`Amount must be more than 0`);
             }
 
             if (+delegationAmount < MIN_AMOUNT) {
@@ -111,36 +120,27 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
     return (
         <Box
             direction="column"
-            gap="10px"
+            gap="20px"
             align="end"
             fill={true}
         >
-
-            <Box direction="row" justify="between" align="end" fill={true} gap="10px">
-                <Box
-                    direction="column"
-                    gap="10px"
-                    align="end"
-                    fill={true}
-                >
-                    <Box direction="row" justify="between" fill={true}>
-                        <Text>
-                            Amount
-                        </Text>
-                        <Text>
-                            {web3 && account ? `Max ${convertToONE(+balance)} ONE` : ''}
-                        </Text>
-                    </Box>
-                    <TextInput
-                        type="number"
-                        min={MIN_AMOUNT}
-                        placeholder="Enter amount"
-                        value={delegationAmount}
-                        disabled={loading}
-                        onChange={(e) => setDelegationAmount(e.target.value)}
-                        onBlur={() => setIsTouched(true)}
-                    />
-                </Box>
+            <Box
+                direction="row"
+                justify="between"
+                align="end"
+                fill={true}
+                gap="10px"
+            >
+                <Input
+                    type="number"
+                    min={MIN_AMOUNT}
+                    placeholder="Amount"
+                    value={delegationAmount}
+                    disabled={loading}
+                    onChange={(e) => setDelegationAmount(e.target.value)}
+                    onBlur={() => setIsTouched(true)}
+                    max={convertToONE(+balance)}
+                />
                 <Button
                     onClick={handleDelegate}
                     disabled={loading}
@@ -148,16 +148,17 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
                         background: "#0a93eb",
                         color: 'white',
                         width: 200,
-                        height: 43,
+                        height: 47,
                         borderRadius: 5,
                         textAlign: 'center'
                     }}
                 >
-                    <Text size="18px">
+                    <Text size="18px" margin={{ bottom: "2px" }}>
                         {loading ? 'Undelegating' : 'Confirm'}
                     </Text>
                 </Button>
             </Box>
+
             {
                 txHash && <Box fill={true} align="start">
                     Transaction Hash:{' '}
@@ -165,7 +166,8 @@ export const UnDelegationBlock = (props: IDelegationProps) => {
                         href={`https://explorer.harmony.one/tx/${txHash}`}
                         target="_blank"
                     >
-                        <Text>{txHash}</Text>
+                        <Text
+                        >{txHash}</Text>
                     </Link>
                 </Box>
             }
