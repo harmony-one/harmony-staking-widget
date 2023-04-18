@@ -1,6 +1,6 @@
 {
   "name": "harmony-staking-widget",
-  "version": "1.0.12",
+  "version": "1.0.14",
   "description": "Harmony Staking Widget",
   "author": "harmony",
   "license": "MIT",
@@ -30,7 +30,6 @@
     "@types/react-dom": "^16.9.7",
     "@typescript-eslint/eslint-plugin": "^2.26.0",
     "@typescript-eslint/parser": "^2.26.0",
-    "microbundle-crl": "^0.13.10",
     "babel-eslint": "^10.0.3",
     "cross-env": "^7.0.2",
     "eslint": "^6.8.0",
@@ -44,6 +43,7 @@
     "eslint-plugin-react": "^7.17.0",
     "eslint-plugin-standard": "^4.0.1",
     "gh-pages": "^2.2.0",
+    "microbundle-crl": "^0.13.10",
     "npm-run-all": "^4.1.5",
     "prettier": "^2.0.4",
     "react-scripts": "5.0.1",
@@ -53,12 +53,12 @@
     "dist"
   ],
   "dependencies": {
+    "@dicebear/collection": "^6.0.2",
+    "@dicebear/core": "^6.0.2",
     "grommet": "^2.31.0",
     "harmony-staking-sdk": "^1.0.6",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "@dicebear/avatars": "^4.10.8",
-    "@dicebear/collection": "^6.0.2"
+    "react-dom": "^18.2.0"
   },
   "peerDependencies": {
     "styled-components": "^5.3.0"
