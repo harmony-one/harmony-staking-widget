@@ -1,6 +1,6 @@
 {
   "name": "harmony-staking-widget",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Harmony Staking Widget",
   "author": "harmony",
   "license": "MIT",
@@ -56,7 +56,9 @@
     "grommet": "^2.31.0",
     "harmony-staking-sdk": "^1.0.6",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@dicebear/avatars": "^4.10.8",
+    "@dicebear/collection": "^6.0.2"
   },
   "peerDependencies": {
     "styled-components": "^5.3.0"
